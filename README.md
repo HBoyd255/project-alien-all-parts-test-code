@@ -19,10 +19,9 @@ robot in that direction.
 The 8 bumpers will be read and displayed in green on the LED strip.
 
 The ultrasonic sensor will be read and displayed by increasing the brightness of
-the red LEDs under the sensor.
+the blue LEDs above the sensors.
 
-The ultrasonic sensor will be read and displayed by increasing the brightness of
-the blue LEDs above each sensors.
+The infrared sensor will be read and displayed by increasing the brightness of
+the red LEDs under each sensor.
 
 The robot will also provide these values over serial.
-
