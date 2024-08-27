@@ -32,6 +32,7 @@
 #define NES_SHIFT_REG_DATA D8
 #define COMMON_SHIFT_REG_LOAD A3
 #define COMMON_SHIFT_REG_CLOCK A2
+#define BUMPER_BIT_OFFSET 4
 
 // Pixels
 // The pin that D1 of the LED strip is connected to.

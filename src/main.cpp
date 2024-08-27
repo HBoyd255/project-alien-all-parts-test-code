@@ -26,9 +26,14 @@
 
 #include <Arduino.h>
 
+#include "binary.h"
+#include "bumper.h"
 #include "pixels.h"
 #include "systemInfo.h"
 #include "ultrasonic.h"
+
+Bumper bumper(BUMPER_SHIFT_REG_DATA, COMMON_SHIFT_REG_LOAD,
+              COMMON_SHIFT_REG_CLOCK, BUMPER_BIT_OFFSET);
 
 Pixels pixels(PIXELS_DATA_PIN, LED_COUNT);
 
@@ -37,6 +42,8 @@ Ultrasonic ultrasonic(ULTRASONIC_TRIGGER, ULTRASONIC_ECHO,
                       ULTRASONIC_DATA_SHELF_LIFE);
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
+
+    bumper.setup();
 
     pixels.setup();
 
@@ -72,4 +79,9 @@ void loop() {
 
     pixels.setPixel(7, Colour(0, 0, ultrasonicBrightness), true);
     pixels.setPixel(8, Colour(0, 0, ultrasonicBrightness), true);
+
+    uint8_t bumperState = bumper.read();
+
+    Serial.print(" Bumper state:");
+    printByte(bumperState, ",");
 }
