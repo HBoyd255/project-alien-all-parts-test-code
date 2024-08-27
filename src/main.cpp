@@ -77,11 +77,34 @@ void loop() {
         ultrasonicBrightness = 0;
     }
 
-    pixels.setPixel(7, Colour(0, 0, ultrasonicBrightness), true);
-    pixels.setPixel(8, Colour(0, 0, ultrasonicBrightness), true);
-
     uint8_t bumperState = bumper.read();
 
     Serial.print(" Bumper state:");
     printByte(bumperState, ",");
+
+    bool bumperF = bool(bumperState & 0b00000001);
+    bool bumperFR = bool(bumperState & 0b00000010);
+    bool bumperR = bool(bumperState & 0b00000100);
+    bool bumperBR = bool(bumperState & 0b00001000);
+    bool bumperB = bool(bumperState & 0b00010000);
+    bool bumperBL = bool(bumperState & 0b00100000);
+    bool bumperL = bool(bumperState & 0b01000000);
+    bool bumperFL = bool(bumperState & 0b10000000);
+
+    pixels.setPixel(0, Colour(0, bumperB * 255, 0), true);
+    pixels.setPixel(1, Colour(0, bumperBL * 255, 0), true);
+    pixels.setPixel(2, Colour(0, bumperBL * 255, 0), true);
+    pixels.setPixel(3, Colour(0, bumperL * 255, 0), true);
+    pixels.setPixel(4, Colour(0, bumperL * 255, 0), true);
+    pixels.setPixel(5, Colour(0, bumperFL * 255, 0), true);
+    pixels.setPixel(6, Colour(0, bumperFL * 255, 0), true);
+    pixels.setPixel(7, Colour(0, bumperF * 255, ultrasonicBrightness), true);
+    pixels.setPixel(8, Colour(0, bumperF * 255, ultrasonicBrightness), true);
+    pixels.setPixel(9, Colour(0, bumperFR * 255, 0), true);
+    pixels.setPixel(10, Colour(0, bumperFR * 255, 0), true);
+    pixels.setPixel(11, Colour(0, bumperR * 255, 0), true);
+    pixels.setPixel(12, Colour(0, bumperR * 255, 0), true);
+    pixels.setPixel(13, Colour(0, bumperBR * 255, 0), true);
+    pixels.setPixel(14, Colour(0, bumperBR * 255, 0), true);
+    pixels.setPixel(15, Colour(0, bumperB * 255, 0), true);
 }
