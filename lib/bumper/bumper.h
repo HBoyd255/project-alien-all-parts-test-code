@@ -19,7 +19,8 @@
 class Bumper {
    public:
     /**
-     * @brief Construct a new Bumper object.
+     * @brief Construct a new Bumper object, then sets the data pin to input,
+     * and the load and clock pin to output.
      *
      * @param dataPin The pin connected to the data pin on the shift register.
      * @param loadPin The pin connected to the load pin on the shift register.
@@ -28,13 +29,7 @@ class Bumper {
      */
     Bumper(unsigned char dataPin, unsigned char loadPin, unsigned char clockPin,
            unsigned char bitOffset);
-
-    /**
-     * @brief Sets up the class by setting the data pin to input, and the load
-     * and clock pin to output.
-     */
-    void setup();
-
+           
     /**
      * @brief Reads the current state of the 8 buttons, as a single char.
      *

@@ -50,8 +50,6 @@ Infrared infraredRight = Infrared(RIGHT_INFRARED_INDEX);
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
 
-    bumper.setup();
-
     pixels.setup();
 
     ultrasonic.setup([]() { ultrasonic.isr(); });

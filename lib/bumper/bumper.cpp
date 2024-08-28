@@ -18,7 +18,8 @@
 #define BUMPER_BUTTON_COUNT 8
 
 /**
- * @brief Construct a new Bumper object.
+ * @brief Construct a new Bumper object, then sets the data pin to input,
+ * and the load and clock pin to output.
  *
  * @param dataPin The pin connected to the data pin on the shift register.
  * @param loadPin The pin connected to the load pin on the shift register.
@@ -30,13 +31,7 @@ Bumper::Bumper(unsigned char dataPin, unsigned char loadPin,
     : _dataPin(dataPin),
       _loadPin(loadPin),
       _clockPin(clockPin),
-      _bitOffset(bitOffset) {}
-
-/**
- * @brief Sets up the class by setting the data pin to input, and the load
- * and clock pin to output.
- */
-void Bumper::setup() {
+      _bitOffset(bitOffset) {
     pinMode(this->_dataPin, INPUT);
     pinMode(this->_loadPin, OUTPUT);
     pinMode(this->_clockPin, OUTPUT);
