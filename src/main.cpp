@@ -25,6 +25,7 @@
 // Font used - ANSI Shadow
 
 #include <Arduino.h>
+#include <NESControllerInterface.h>
 
 #include "binary.h"
 #include "bumper.h"
@@ -32,6 +33,9 @@
 #include "pixels.h"
 #include "systemInfo.h"
 #include "ultrasonic.h"
+
+NESControllerInterface nesController(NES_SHIFT_REG_DATA, COMMON_SHIFT_REG_LOAD,
+                                     COMMON_SHIFT_REG_CLOCK);
 
 Bumper bumper(BUMPER_SHIFT_REG_DATA, COMMON_SHIFT_REG_LOAD,
               COMMON_SHIFT_REG_CLOCK, BUMPER_BIT_OFFSET);
@@ -47,6 +51,27 @@ Infrared infraredFrontLeft = Infrared(FRONT_LEFT_INFRARED_INDEX);
 Infrared infraredFrontRight = Infrared(FRONT_RIGHT_INFRARED_INDEX);
 Infrared infraredRight = Infrared(RIGHT_INFRARED_INDEX);
 
+int leftMotorSteps = 0;
+int rightMotorSteps = 0;
+
+void leftMotorISR() {
+    if (digitalRead(LEFT_MOTOR_ENCODER_A_PIN) !=
+        digitalRead(LEFT_MOTOR_ENCODER_B_PIN)) {
+        leftMotorSteps++;
+    } else {
+        leftMotorSteps--;
+    }
+}
+
+void rightMotorISR() {
+    if (digitalRead(RIGHT_MOTOR_ENCODER_A_PIN) !=
+        digitalRead(RIGHT_MOTOR_ENCODER_B_PIN)) {
+        rightMotorSteps++;
+    } else {
+        rightMotorSteps--;
+    }
+}
+
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
 
@@ -58,6 +83,28 @@ void setup() {
     infraredFrontLeft.setup();
     infraredFrontRight.setup();
     infraredRight.setup();
+
+    // Setup left motor encoders.
+    pinMode(LEFT_MOTOR_ENCODER_A_PIN, INPUT);
+    pinMode(LEFT_MOTOR_ENCODER_B_PIN, INPUT);
+
+    // Setup left motor drive.
+    pinMode(LEFT_MOTOR_DIRECTION_PIN, OUTPUT);
+    pinMode(LEFT_MOTOR_SPEED_PIN, OUTPUT);
+
+    // Setup right motor encoders.
+    pinMode(RIGHT_MOTOR_ENCODER_A_PIN, INPUT);
+    pinMode(RIGHT_MOTOR_ENCODER_B_PIN, INPUT);
+
+    // Setup right motor drive.
+    pinMode(RIGHT_MOTOR_DIRECTION_PIN, OUTPUT);
+    pinMode(RIGHT_MOTOR_SPEED_PIN, OUTPUT);
+
+    // Attach the interrupt service routines.
+    attachInterrupt(digitalPinToInterrupt(LEFT_MOTOR_ENCODER_A_PIN),
+                    leftMotorISR, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(RIGHT_MOTOR_ENCODER_A_PIN),
+                    rightMotorISR, CHANGE);
 }
 
 int distanceToBrightness(int distance) {
@@ -127,8 +174,6 @@ void loop() {
     Serial.print(" Right infrared reading in millimetres:");
     Serial.println(rightIRDistance);
 
-    Serial.println();
-
     pixels.setPixel(0, Colour(0, bumperB * 255, 0), true);
     pixels.setPixel(1, Colour(0, bumperBL * 255, 0), true);
     pixels.setPixel(2, Colour(0, bumperBL * 255, 0), true);
@@ -145,4 +190,79 @@ void loop() {
     pixels.setPixel(13, Colour(0, bumperBR * 255, 0), true);
     pixels.setPixel(14, Colour(0, bumperBR * 255, 0), true);
     pixels.setPixel(15, Colour(0, bumperB * 255, 0), true);
+
+    // Print the encoder values.
+    Serial.print(" ENC1A:");
+    Serial.print(digitalRead(LEFT_MOTOR_ENCODER_A_PIN));
+    Serial.print(" ENC1B:");
+    Serial.print(digitalRead(LEFT_MOTOR_ENCODER_B_PIN));
+    Serial.print(" ENC1 Steps:");
+    Serial.print(leftMotorSteps);
+
+    Serial.print(" ENC2A:");
+    Serial.print(digitalRead(RIGHT_MOTOR_ENCODER_A_PIN));
+    Serial.print(" ENC2B:");
+    Serial.print(digitalRead(RIGHT_MOTOR_ENCODER_B_PIN));
+    Serial.print(" ENC2 Steps:");
+    Serial.println(rightMotorSteps);
+
+    NESInput nesReading = nesController.getNESInput();
+
+    // If any NES buttons are pressed, print the state of the NES controller.
+    if (nesReading.anyButtonPressed()) {
+        Serial.println(nesReading);
+    }
+
+    bool upLeft = nesReading.buttonUp && nesReading.buttonLeft;
+    bool upRight = nesReading.buttonUp && nesReading.buttonRight;
+    bool downLeft = nesReading.buttonDown && nesReading.buttonLeft;
+    bool downRight = nesReading.buttonDown && nesReading.buttonRight;
+
+    if (upLeft) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, HIGH);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, HIGH);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 100);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 150);
+    } else if (upRight) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, HIGH);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, HIGH);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 100);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 100);
+    } else if (downLeft) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, LOW);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, LOW);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 100);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 150);
+    } else if (downRight) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, LOW);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, LOW);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 150);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 100);
+    } else if (nesReading.buttonUp) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, HIGH);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, HIGH);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 150);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 150);
+    } else if (nesReading.buttonDown) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, LOW);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, LOW);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 150);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 150);
+    } else if (nesReading.buttonLeft) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, LOW);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, HIGH);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 100);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 100);
+    } else if (nesReading.buttonRight) {
+        digitalWrite(LEFT_MOTOR_DIRECTION_PIN, HIGH);
+        digitalWrite(RIGHT_MOTOR_DIRECTION_PIN, LOW);
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 100);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 100);
+    } else {  // If no NES direction buttons are pressed, stop the motors.
+        analogWrite(LEFT_MOTOR_SPEED_PIN, 0);
+        analogWrite(RIGHT_MOTOR_SPEED_PIN, 0);
+    }
+    Serial.println();
+
+    delay(100);
 }
